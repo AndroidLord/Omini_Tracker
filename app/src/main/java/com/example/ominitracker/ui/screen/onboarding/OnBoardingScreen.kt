@@ -1,5 +1,6 @@
 package com.example.ominitracker.ui.screen.onboarding
 
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.ominitracker.data.modal.UserInfo
 import com.example.ominitracker.ui.screen.onboarding.uiComponent.AgeInputScreen
@@ -51,7 +53,16 @@ fun OnboardingScreen(
         pageCount = { unlockedCount }
     )
 
+    val current = pagerState.currentPage
+    val currentPage = OnboardingPage.pageAt(current)
+    val isCurrentPageValid = remember(userInfo, current) {
+        isPageValid(currentPage, userInfo)
+    }
+
+
     val coroutineScope = rememberCoroutineScope()
+
+    val context = LocalContext.current
 
     // Auto-unlock next when current page becomes valid; optionally lock back to current if invalid
     LaunchedEffect(userInfo, pagerState.currentPage) {
@@ -128,7 +139,20 @@ fun OnboardingScreen(
                 val isLast = pagerState.currentPage == unlockedCount - 1 &&
                         unlockedCount == OnboardingPage.totalCount
 
-                Button(onClick = {
+                Button(
+                    onClick = {
+                    val currentPage = OnboardingPage.pageAt(pagerState.currentPage)
+
+                    if (!isPageValid(currentPage, userInfo)) {
+                        // 🔥 Validation toast
+                        Toast.makeText(
+                            context,
+                            "Please fill out this page before continuing",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
                     if (isLast) {
                         onComplete(userInfo)
                     } else {
@@ -140,7 +164,9 @@ fun OnboardingScreen(
                             }
                         }
                     }
-                }) {
+                },
+                    enabled = isCurrentPageValid
+                ) {
                     Text(if (isLast) "Finish" else "Next")
                 }
             }
