@@ -48,10 +48,14 @@ class ReminderWorker(val context: Context, param: WorkerParameters) : Worker(con
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val title = inputData.getString("title") ?: "Reminder"
+        val message = inputData.getString("message") ?: "Time to check your task!"
+        val smallIcon = inputData.getInt("smallIcon", R.drawable.ic_reminder)
+
         val notification = NotificationCompat.Builder(applicationContext, Util.notificationChannelId)
-            .setContentTitle("Reminder")
-            .setContentText("Time to check your task!")
-            .setSmallIcon(R.drawable.ic_reminder)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(smallIcon)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)

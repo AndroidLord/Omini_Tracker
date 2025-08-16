@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.ominitracker.data.modal.UserInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 val Context.appDataStore: DataStore<Preferences> by preferencesDataStore(name = PreferenceFile.APP_DATA)
 
@@ -18,7 +20,8 @@ suspend fun saveUserInfo(context: Context,userInfo: UserInfo) {
     }
 }
 
-suspend fun updateOnboardingPromptDate(context: Context, currentTimeMillis: Long) =
+suspend fun updateOnboardingPromptDate(context: Context, currentTimeMillis: Long) = withContext(Dispatchers.IO){
     context.appDataStore.edit { prefs ->
         prefs[PreferenceKeys.SKIP_ONBOARDING_LAST_PROMPT_DATE] = currentTimeMillis
     }
+}

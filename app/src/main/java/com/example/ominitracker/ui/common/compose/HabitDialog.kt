@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.ominitracker.data.modal.HabitEntity
+import java.time.LocalDateTime
 
 @Composable
 fun HabitDialog(
@@ -152,7 +153,7 @@ fun HabitDialogContent(
                     HabitEntity(
                         title = habitTitle,
                         frequency = frequency,
-                        customInterval = customInterval,
+                        customInterval = LocalDateTime.now().plusMinutes(customInterval.toLong()).hour.toLong(),
                         repetitionCount = repetitionCount,
                         cueTrigger = cueTrigger,
                         goalCount = goalCount.toIntOrNull() ?: 30,

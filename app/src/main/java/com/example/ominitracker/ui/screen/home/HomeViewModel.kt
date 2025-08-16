@@ -1,14 +1,31 @@
 package com.example.ominitracker.ui.screen.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.work.Constraints
+import androidx.work.workDataOf
+import com.example.ominitracker.data.dao.HabitDao
+import com.example.ominitracker.data.modal.HabitEntity
+import com.example.ominitracker.schedular.ReminderWorker
+import com.example.ominitracker.schedular.WorkMaster
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class HomeViewModel : ViewModel() {
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val habitDao: HabitDao,
+    @ApplicationContext private val context: Context
+): ViewModel() {
 
-    val _state: MutableStateFlow<HomeUiState> = MutableStateFlow(HomeUiState())
-    val state = _state.asStateFlow()
+    private val _uiState: MutableStateFlow<HomeUiState> = MutableStateFlow(HomeUiState())
+    val uiState = _uiState.asStateFlow()
 
     fun onEvent(event: HomeUiEvent) {
         when (event) {
@@ -16,35 +33,51 @@ class HomeViewModel : ViewModel() {
                 handleOmniTrackerEvents(event)
             }
             is HomeUiEvent.OmniWorkMasterEvent -> {
-                handleWorkMasterEvents(event)
+                viewModelScope.launch {
+                    handleWorkMasterEvents(event)
+                }
             }
         }
     }
 
-    private fun handleWorkMasterEvents(event: HomeUiEvent.OmniWorkMasterEvent) {
+    private suspend fun handleWorkMasterEvents(event: HomeUiEvent.OmniWorkMasterEvent) {
         when (event.workerEvent) {
-            WorkMasterUiEvent.oneTimeWorkEvent -> {
-                _state.update { it.copy(workMasterEvent = WorkMasterUiEvent.oneTimeWorkEvent) }
+            is WorkMasterEvent.addHabit -> {
+                val habit = event.workerEvent.habit
+                val inserted = habitDao.upsertHabit(habit)
+                if(inserted != -1L) {
+                    WorkMaster.enqueuePeriodicWork(
+                        context = context,
+                        workerClass = ReminderWorker::class.java,
+                        repeatInterval = habit.customInterval,
+                        timeUnit = TimeUnit.MINUTES,
+                        inputData = workDataOf(
+                            "habitJson" to habit.title,
+                            "message" to habit.cueTrigger,
+                            "icon" to habit.reward
+                        ),
+                        constraints = Constraints.Builder()
+                            .setRequiresBatteryNotLow(true)
+                            .build()
+                    )
+                }
+                _uiState.update { it.copy(workMasterEvent = WorkMasterEvent.Initiate) }
             }
-            WorkMasterUiEvent.periodicWorkEvent -> {
-                _state.update { it.copy(workMasterEvent = WorkMasterUiEvent.periodicWorkEvent) }
-            }
-            else -> {
-                _state.update { it.copy(workMasterEvent = WorkMasterUiEvent.Initiate) }
-            }
+
+            else -> Unit
         }
     }
 
     private fun handleOmniTrackerEvents(event: HomeUiEvent.OmniEvent) {
         when (event.uiEvent) {
             OmniTrackerUiEvent.Initiate -> {
-                _state.update { it.copy(omniEvent = OmniTrackerUiEvent.Initiate) }
+                _uiState.update { it.copy(omniEvent = OmniTrackerUiEvent.Initiate) }
             }
             OmniTrackerUiEvent.MakeHabit -> {
-                _state.update { it.copy(omniEvent = OmniTrackerUiEvent.MakeHabit) }
+                _uiState.update { it.copy(omniEvent = OmniTrackerUiEvent.MakeHabit) }
             }
             else -> {
-                _state.update { it.copy(omniEvent = OmniTrackerUiEvent.MakeToast("Feature not available yet")) }
+                _uiState.update { it.copy(omniEvent = OmniTrackerUiEvent.MakeToast("Feature not available yet")) }
             }
         }
     }
@@ -52,33 +85,32 @@ class HomeViewModel : ViewModel() {
 
 data class HomeUiState(
     val omniEvent: OmniTrackerUiEvent = OmniTrackerUiEvent.Initiate,
-    val workMasterEvent: WorkMasterUiEvent = WorkMasterUiEvent.Initiate
+    val workMasterEvent: WorkMasterEvent = WorkMasterEvent.Initiate
 )
 
 
 // HomeUiEvent for top-level events
 sealed interface HomeUiEvent {
     data class OmniEvent(val uiEvent: OmniTrackerUiEvent) : HomeUiEvent
-    data class OmniWorkMasterEvent(val workerEvent: WorkMasterUiEvent) : HomeUiEvent
+    data class OmniWorkMasterEvent(val workerEvent: WorkMasterEvent) : HomeUiEvent
 }
 
 // WorkMasterUiEvent for specific events
-sealed interface WorkMasterUiEvent {
-    data object Initiate : WorkMasterUiEvent
-    data object oneTimeWorkEvent : WorkMasterUiEvent
-    data object periodicWorkEvent : WorkMasterUiEvent
+sealed interface WorkMasterEvent {
+    data object Initiate : WorkMasterEvent
+    data class addHabit(val habit: HabitEntity) : WorkMasterEvent
 }
 
 // OmniTrackerUiEvent for specific events
 sealed interface OmniTrackerUiEvent {
-    object Initiate : OmniTrackerUiEvent
-    object MakeHabit : OmniTrackerUiEvent
-    object MakeReminder : OmniTrackerUiEvent
-    object MakeNote : OmniTrackerUiEvent
-    object MakeGoal : OmniTrackerUiEvent
-    object MakeAlarm : OmniTrackerUiEvent
-    object MakeToDo : OmniTrackerUiEvent
-    object MakeJournal : OmniTrackerUiEvent
+    data object Initiate : OmniTrackerUiEvent
+    data object MakeHabit : OmniTrackerUiEvent
+    data object MakeReminder : OmniTrackerUiEvent
+    data object MakeNote : OmniTrackerUiEvent
+    data object MakeGoal : OmniTrackerUiEvent
+    data object MakeAlarm : OmniTrackerUiEvent
+    data object MakeToDo : OmniTrackerUiEvent
+    data object MakeJournal : OmniTrackerUiEvent
     data class MakeToast(val message: String) : OmniTrackerUiEvent
     data class MakeMood(val mood: Mood) : OmniTrackerUiEvent
 }

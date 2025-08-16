@@ -17,7 +17,7 @@ interface HabitDao {
     suspend fun getHabitById(id: Int): HabitEntity
 
     @Upsert
-    suspend fun upsertHabit(habit: HabitEntity)
+    suspend fun upsertHabit(habit: HabitEntity): Long
 
     @Delete
     suspend fun deleteHabit(habit: HabitEntity)

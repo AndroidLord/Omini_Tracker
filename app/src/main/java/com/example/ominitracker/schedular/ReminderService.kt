@@ -10,6 +10,7 @@ import com.example.ominitracker.ui.navigation.Routes
 import com.example.ominitracker.util.Util
 
 class ReminderService : Service() {
+
     override fun onCreate() {
         super.onCreate()
         val notification = NotificationCompat.Builder(this, Util.notificationServiceChannelId)
@@ -19,6 +20,7 @@ class ReminderService : Service() {
             .build()
         startForeground(2, notification) // Start foreground with a notification
     }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
             println("Text10: ReminderService started")
@@ -32,6 +34,7 @@ class ReminderService : Service() {
         println("Text10: ReminderService stopped")
         return START_NOT_STICKY
     }
+
     private fun openReminderActivity() {
         val deepLinkUri = "${applicationContext.packageName}://${Routes.Reminder.route}"
         val reminderIntent = Intent(Intent.ACTION_VIEW, Uri.parse(deepLinkUri)).apply {

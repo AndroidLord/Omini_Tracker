@@ -6,7 +6,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -33,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ominitracker.schedular.ReminderWorker
@@ -43,7 +43,7 @@ import com.example.ominitracker.util.PermissionHandler
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -51,7 +51,7 @@ fun HomeScreen(
     }
     PermissionHandler.RequestForegroundServiceSpecialUsePermission()
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     Box(
@@ -76,7 +76,8 @@ fun HomeScreen(
                         onCancel = {
                             viewModel.onEvent(HomeUiEvent.OmniEvent(OmniTrackerUiEvent.Initiate))
                         },
-                        onSave = {
+                        onSave = { habit ->
+                            viewModel.onEvent(HomeUiEvent.OmniWorkMasterEvent(WorkMasterEvent.addHabit(habit)))
                             viewModel.onEvent(HomeUiEvent.OmniEvent(OmniTrackerUiEvent.Initiate))
                         }
                     )

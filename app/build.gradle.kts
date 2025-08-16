@@ -14,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ominitracker"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -93,6 +93,8 @@ dependencies {
 
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation("androidx.room:room-ktx:$room_version")
     // optional - Paging 3 Integration
@@ -101,6 +103,9 @@ dependencies {
     // Dagger-Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+
+    // Hilt Navigation for Compose
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 }
 
 // Allow references to generated code

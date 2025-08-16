@@ -9,10 +9,16 @@ data class HabitEntity(
     val id: Int = 0,
     val title: String,
     val frequency: String,
-    val customInterval: String,
+    val customInterval: Long,
     val repetitionCount: String,
     val cueTrigger: String,
     val goalCount: Int,
     val reward: String,
     val isComplete : Boolean = false
 )
+
+//data class NotificationInputData(
+//    val title: String,
+//    val message: String,
+//    val icon: Int? = null
+//)
