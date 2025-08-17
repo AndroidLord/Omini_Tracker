@@ -10,9 +10,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import com.example.ominitracker.ui.screen.LoadingLottieScreen
-import com.example.ominitracker.ui.screen.onboarding.OnboardingScreen
 import com.example.ominitracker.ui.screen.ReminderScreen
 import com.example.ominitracker.ui.screen.home.HomeScreen
+import com.example.ominitracker.ui.screen.onboarding.OnboardingScreen
 import com.example.ominitracker.util.PreferenceKeys
 import com.example.ominitracker.util.Util
 import com.example.ominitracker.util.appDataStore
@@ -56,7 +56,7 @@ fun AppNavGraph(navController: NavHostController) {
             }.first()
         }
         delay(2000)
-        val route = if (false) {
+        val route = if (isUserSetupComplete) {
             Routes.Home.route
         } else {
             Routes.OnBoarding.route
